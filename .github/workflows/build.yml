@@ -1,4 +1,4 @@
-name: Build and Release Windows EXE (MSVC)
+name: Build and Release Windows EXE (MinGW)
 
 on:
   push:
@@ -16,28 +16,31 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
+      # 直接下载并解压 MinGW，避免使用有问题的 Action
+      - name: Install MinGW-w64
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/brechtsanders/winlibs_mingw/releases/download/13.2.0-16.0.6-11.0.0-ucrt-r1/winlibs-x86_64-posix-seh-gcc-13.2.0-mingw-w64ucrt-11.0.0-r1.7z" -OutFile mingw.7z
+          7z x -y mingw.7z -oC:\
+          echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Configure CMake
+      - name: Verify MinGW
+        run: |
+          gcc --version
+          g++ --version
+
+      - name: Build with CMake
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 `
-            -DCMAKE_CXX_FLAGS="/MT /EHsc" `
-            -DCMAKE_C_FLAGS="/MT" `
-            -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: |
-          cd build
-          cmake --build . --config Release
+          cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+          mingw32-make -j
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: paper-windows-exe
-          path: build/Release/*.exe
+          path: build/*.exe
 
   release:
     needs: build-windows
