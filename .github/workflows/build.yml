@@ -4,8 +4,8 @@ on:
   push:
     branches: [ main ]
     tags:
-      - 'v*'  # 合并到同一个push下，避免重复定义
-  workflow_dispatch:  # 手动触发
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -24,7 +24,7 @@ jobs:
           mkdir build
           cd build
           cmake .. -G "Visual Studio 17 2022" -A x64 `
-            -DCMAKE_CXX_FLAGS="/MT" `
+            -DCMAKE_CXX_FLAGS="/MT /EHsc" `
             -DCMAKE_C_FLAGS="/MT" `
             -DCMAKE_BUILD_TYPE=Release
 
@@ -42,7 +42,7 @@ jobs:
   release:
     needs: build-windows
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')  # 仅在推送标签时发布
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download EXE artifact
         uses: actions/download-artifact@v4
