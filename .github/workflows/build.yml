@@ -1,61 +1,37 @@
-name: Build
+name: Build Paper ADBD Tool with MSVC
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup CMake
-      uses: jwlawson/actions-setup-cmake@v1.14
-      with:
-        cmake-version: '3.20'
-        
-    - name: Setup MinGW
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: MINGW64
-        update: true
-        install: >-
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-make
-          make
-          
-    - name: Configure CMake
-      shell: msys2 {0}
-      run: |
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles"
-        
-    - name: Build
-      shell: msys2 {0}
-      run: |
-        cd build
-        mingw32-make
-        
-    - name: Test executable
-      shell: msys2 {0}
-      run: |
-        if [ -f "build/paper.exe" ]; then
-          echo "Executable built successfully"
-          ls -la build/paper.exe
-        else
-          echo "Executable not found"
-          exit 1
-        fi
-        
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: paper-build-${{ github.sha }}
-        path: build/paper.exe
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64 ^
+            -DCMAKE_CXX_FLAGS="/MT" ^
+            -DCMAKE_C_FLAGS="/MT" ^
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-exe
+          path: build/Release/paper.exe
