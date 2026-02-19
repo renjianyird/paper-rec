@@ -3,10 +3,9 @@ name: Build and Release Windows EXE (MSVC)
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
-  push:
     tags:
-      - 'v*'
+      - 'v*'  # 合并到同一个push下，避免重复定义
+  workflow_dispatch:  # 手动触发
 
 jobs:
   build-windows:
@@ -43,13 +42,15 @@ jobs:
   release:
     needs: build-windows
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')  # 仅在推送标签时发布
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download EXE artifact
+        uses: actions/download-artifact@v4
         with:
           name: paper-windows-exe
           path: ./
-      - uses: softprops/action-gh-release@v2
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           files: ./*.exe
         env:
