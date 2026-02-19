@@ -1,4 +1,4 @@
-name: Build Paper ADBD Tool with MSVC
+name: Build and Release
 
 on:
   push:
@@ -6,10 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -20,9 +22,9 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 ^
-            -DCMAKE_CXX_FLAGS="/MT" ^
-            -DCMAKE_C_FLAGS="/MT" ^
+          cmake .. -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_CXX_FLAGS="/MT" `
+            -DCMAKE_C_FLAGS="/MT" `
             -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
@@ -34,4 +36,23 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: paper-exe
-          path: build/Release/paper.exe
+          path: build/Release/*.exe
+
+  # 自动发布到 GitHub Release
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') # 仅在推送标签时触发
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: paper-exe
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
