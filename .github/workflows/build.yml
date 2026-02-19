@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'  # 仅在推送以v开头的标签时自动发布
+      - 'v*'
 
 jobs:
   build-windows:
@@ -43,17 +43,13 @@ jobs:
   release:
     needs: build-windows
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')  # 仅在推送标签时执行发布
-
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Download EXE artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: paper-windows-exe
           path: ./
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           files: ./*.exe
         env:
