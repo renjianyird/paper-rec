@@ -1,42 +1,24 @@
-
-// Copyright (C) 2025 Langning Chen
-//
-// This file is part of paper.
-//
-// paper is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// paper is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with paper.  If not, see <https://www.gnu.org/licenses/>.
-
 #pragma once
-
 #include <string>
 #include <map>
+#include <stdexcept>
 
-class HTTP_RESPONSE
-{
-private:
-    const std::map<int, std::string> statusCodes = {
-        {200, "OK"},
-        {206, "Partial Content"},
-        {404, "Not Found"}};
+// 补充statusCodes的声明（需确保全局/类内已定义）
+extern const std::map<int, std::string> statusCodes;
 
+class HTTP_RESPONSE {
 public:
-    int statusCode;
-    std::map<std::string, std::string> headers = {
-        {"Server", "nginx"},
-    };
+    int statusCode = 200; // 默认状态码，避免未初始化
+    std::map<std::string, std::string> headers;
     std::string body;
 
+    // 成员函数声明（明确可能抛出异常）
     void setBody(std::string bodyContent);
     std::string headerToString();
     std::string toString();
+
+    // 可选：构造函数（初始化默认Header，如Content-Type）
+    HTTP_RESPONSE() {
+        headers["Content-Type"] = "text/plain; charset=utf-8"; // 默认Content-Type
+    }
 };
