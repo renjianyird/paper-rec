@@ -22,7 +22,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Packet
 )
 
-# 只加这两句，保证单文件、不卡
 target_link_options(${PROJECT_NAME} PRIVATE
     -static-libgcc
     -static-libstdc++
